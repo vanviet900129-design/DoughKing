@@ -47,18 +47,20 @@ local function hasItem(name)
 end
 
 local function findEnemy(list)
+    local function eliteAlive()
     local enemies = workspace:FindFirstChild("Enemies")
-    if not enemies then return end
+    if not enemies then return false end
+
     for _, mob in pairs(enemies:GetChildren()) do
-        for _, name in pairs(list) do
+        for _, name in pairs(EliteNames) do
             if mob.Name == name
             and mob:FindFirstChild("Humanoid")
-            and mob.Humanoid.Health > 0
-            and mob:FindFirstChild("HumanoidRootPart") then
-                return mob
+            and mob.Humanoid.Health > 0 then
+                return true
             end
         end
     end
+    return false
 end
 
 -- ================== NO CLIP ==================
@@ -118,13 +120,15 @@ task.spawn(function()
         if not getgenv().Auto then continue end
 
         -- XÁC ĐỊNH PHASE THẬT
-        if not hasItem("God's Chalice") then
-            phase = "elite"
-        elseif hasItem("God's Chalice") and not hasItem("Sweet Chalice") then
-            phase = "cake"
-        elseif hasItem("Sweet Chalice") then
-            phase = "summon"
-        end
+if not hasItem("Sweet Chalice") then
+    if eliteAlive() and not hasItem("God's Chalice") then
+        phase = "elite"     -- Elite vừa spawn → đánh ngay
+    else
+        phase = "cake"      -- Không có Elite → farm quái
+    end
+else
+    phase = "summon"
+end
 
         -- FARM ELITE
         if phase == "elite" then
