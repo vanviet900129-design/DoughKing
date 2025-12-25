@@ -47,7 +47,7 @@ local function hasItem(name)
 end
 
 local function findEnemy(list)
-    local function eliteAlive()
+local function eliteAlive()
     local enemies = workspace:FindFirstChild("Enemies")
     if not enemies then return false end
 
