@@ -23,7 +23,7 @@ hasConjuredCocoa = 0
 hasSweetChalice = false
 hasDefeated500 = false
 
-cakeLandEnemies = {"Cocoa Warrior", "Chocolate Bar Battler", "Cake Monster"}
+cakeLandEnemies = {"Cookie Crafter", "Cake Guard", "Baking Staff", "Head Baker"}
 chocolateLandNPC = "Sweet Crafter"
 cakeLandNPC = "drip_mama"
 
