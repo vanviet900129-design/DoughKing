@@ -73,7 +73,7 @@ function farmPhase()
             enemyCount = enemyCount + 1
             printPhase("Đã đánh: " .. enemyCount .. "/500 enemies")
             
-            if enemyCount >= 500 then
+            if enemyCount <= 500 then
                 phase = "get_chalice"
                 printPhase("Chuyển sang Phase: Get Chalice")
                 return
