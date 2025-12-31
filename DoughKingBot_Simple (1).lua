@@ -1,241 +1,192 @@
--- ============================================================================
--- Script Lua - Blox Fruits: Dough King Auto Bot (Simple Version)
--- Phiên bản: 1.0
--- Mô tả: Script đơn giản chỉ dùng melee thường và bay để farm
--- Cách dùng: loadstring(game:HttpGet("https://raw.githubusercontent.com/yourusername/DoughKingBot/main/DoughKingBot_Simple.lua"))()
--- ============================================================================
+-- AUTO DOUGH KING - DELTA ONLY
+-- Không dùng VirtualInputManager
+-- Đánh bằng Tool:Activate()
 
--- ============================================================================
--- CÀI ĐẶT CƠ BẢN
--- ============================================================================
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
 
-local autofarm = true
-local phase = "farm" -- farm, get_chalice, summon, fight
-local enemyCount = 0
-local hasGodsChalice = false
-local hasConjuredCocoa = 0
-local hasSweetChalice = false
-local hasDefeated500 = false
+-- ================= STATE =================
+getgenv().Auto = false
+local phase = "cake"
 
--- Vị trí và tên enemies (cần điều chỉnh theo game thực tế)
-local cakeLandEnemies = {"Cocoa Warrior", "Chocolate Bar Battler", "Cake Monster"}
-local chocolateLandNPC = "Sweet Crafter"
-local cakeLandNPC = "drip_mama"
+local CakeEnemies = {
+    "Cocoa Warrior",
+    "Chocolate Bar Battler",
+    "Cake Monster"
+}
 
--- ============================================================================
--- HÀM HỖ TRỢ
--- ============================================================================
+local EliteNames = {
+    "Diablo",
+    "Urban",
+    "Deandre"
+}
 
-local function printPhase(message)
-    print("[DoughKingBot] " .. message)
+-- ================= UTILS =================
+local function char()
+    return player.Character or player.CharacterAdded:Wait()
 end
 
-local function moveToPosition(targetPosition, offset)
-    local character = game.Players.LocalPlayer.Character
-    if character and character:FindFirstChild("HumanoidRootPart") then
-        local rootPart = character.HumanoidRootPart
-        local targetCFrame = targetPosition * CFrame.new(offset or 0, 5, 0) * CFrame.Angles(math.rad(-90), 0, 0)
-        rootPart.CFrame = targetCFrame
-    end
+local function hrp()
+    return char():WaitForChild("HumanoidRootPart")
 end
 
-local function findEnemyByName(name)
-    for _, v in pairs(game.Workspace:GetChildren()) do
-        if v:IsA("Model") and v.Name == name then
-            if v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
-                return v
-            end
+local function hasItem(name)
+    local bp = player.Backpack
+    local ch = player.Character
+    return bp:FindFirstChild(name) or (ch and ch:FindFirstChild(name))
+end
+
+-- AUTO EQUIP + ATTACK (DELTA)
+local function equipWeapon()
+    local c = char()
+    for _, v in pairs(c:GetChildren()) do
+        if v:IsA("Tool") then
+            return v
         end
     end
-    return nil
-end
-
-local function findNPCByName(name)
-    return findEnemyByName(name)
+    for _, v in pairs(player.Backpack:GetChildren()) do
+        if v:IsA("Tool") then
+            c.Humanoid:EquipTool(v)
+            return v
+        end
+    end
 end
 
 local function attack()
-    -- Tấn công melee thường
-    -- Script sẽ tự động tấn công khi đứng gần enemy
-    -- Không cần khai báo phím
+    local tool = equipWeapon()
+    if tool then
+        tool:Activate()
+    end
 end
 
--- ============================================================================
--- PHASE 1: FARM ENEMIES
--- ============================================================================
+local function tp(cf)
+    hrp().CFrame = cf * CFrame.new(0,3,0)
+end
 
-local function farmPhase()
-    printPhase("Phase: Farm Enemies - Count: " .. enemyCount .. "/500")
-    
-    -- Tìm và tấn công enemies
-    for _, enemyName in ipairs(cakeLandEnemies) do
-        local enemy = findEnemyByName(enemyName)
-        if enemy then
-            -- Di chuyển đến vị trí enemy (bay lên cao để không bị tấn công)
-            moveToPosition(enemy.HumanoidRootPart.CFrame, 3)
-            
-            -- Tự động tấn công (script sẽ tự động tấn công khi đứng gần)
-            -- Không cần khai báo phím
-            
-            -- Tăng enemy count (giả lập)
-            enemyCount = enemyCount + 1
-            printPhase("Đã đánh: " .. enemyCount .. "/500 enemies")
-            
-            -- Kiểm tra nếu đã đủ 500
-            if enemyCount >= 500 then
-                phase = "get_chalice"
-                printPhase("Chuyển sang Phase: Get Chalice")
-                return
+local function findEnemy(list)
+    local enemies = workspace:FindFirstChild("Enemies")
+    if not enemies then return end
+
+    for _, mob in pairs(enemies:GetChildren()) do
+        for _, name in pairs(list) do
+            if mob.Name == name
+            and mob:FindFirstChild("Humanoid")
+            and mob.Humanoid.Health > 0
+            and mob:FindFirstChild("HumanoidRootPart") then
+                return mob
             end
         end
     end
-    
-    task.wait(0.5)
 end
 
--- ============================================================================
--- PHASE 2: LẤY SWEET CHALICE
--- ============================================================================
-
-local function getChalicePhase()
-    printPhase("Phase: Get Sweet Chalice - God's Chalice: " .. tostring(hasGodsChalice) .. " - Cocoa: " .. hasConjuredCocoa .. "/10")
-    
-    -- Kiểm tra nếu đã có đủ điều kiện
-    if hasGodsChalice and hasConjuredCocoa >= 10 then
-        -- Đến Chocolate Land
-        printPhase("Đang di chuyển đến Chocolate Land...")
-        
-        -- Tìm NPC Sweet Crafter
-        local npc = findNPCByName(chocolateLandNPC)
-        if npc then
-            -- Di chuyển đến NPC
-            moveToPosition(npc.HumanoidRootPart.CFrame, 0)
-            
-            -- Tương tác (giả lập)
-            printPhase("Đang tương tác với Sweet Crafter...")
-            task.wait(1)
-            
-            -- Giả lập việc nhận Sweet Chalice
-            hasSweetChalice = true
-            printPhase("Đã nhận Sweet Chalice!")
-            
-            phase = "summon"
-        end
-    else
-        -- Nếu chưa có God's Chalice
-        if not hasGodsChalice then
-            printPhase("Đang farm Elite Pirates để lấy God's Chalice...")
-            
-            -- Giả lập việc farm Elite Pirates
-            if math.random(1, 100) <= 10 then -- 10% chance
-                hasGodsChalice = true
-                printPhase("Đã nhận God's Chalice!")
-            end
-        end
-        
-        -- Nếu chưa có đủ Conjured Cocoa
-        if hasConjuredCocoa < 10 then
-            printPhase("Đang farm Conjured Cocoa...")
-            
-            -- Giả lập việc farm Conjured Cocoa
-            if math.random(1, 100) <= 25 then -- 25% chance
-                hasConjuredCocoa = hasConjuredCocoa + 1
-                printPhase("Đã nhận Conjured Cocoa - Tổng: " .. hasConjuredCocoa .. "/10")
-            end
-        end
-    end
-    
-    task.wait(0.5)
+local function eliteAlive()
+    return findEnemy(EliteNames) ~= nil
 end
 
--- ============================================================================
--- PHASE 3: TRIỆU HỒI DOUGH KING
--- ============================================================================
-
-local function summonPhase()
-    printPhase("Phase: Summon Dough King - Đang di chuyển đến drip_mama...")
-    
-    -- Tìm NPC drip_mama
-    local npc = findNPCByName(cakeLandNPC)
-    if npc then
-        -- Di chuyển đến NPC
-        moveToPosition(npc.HumanoidRootPart.CFrame, 0)
-        
-        -- Tương tác (giả lập)
-        printPhase("Đang tương tác với drip_mama...")
-        task.wait(1)
-        
-        -- Giả lập việc triệu hồi thành công
-        printPhase("Đã triệu hồi Dough King! - Chuyển sang Phase Fight")
-        
-        phase = "fight"
-        hasDefeated500 = true
-    end
-    
-    task.wait(0.5)
-end
-
--- ============================================================================
--- PHASE 4: ĐÁNH BOSS
--- ============================================================================
-
-local function fightPhase()
-    printPhase("Phase: Fight Dough King - HP: 1,111,500")
-    
-    -- Tìm boss
-    local boss = findEnemyByName("Dough King")
-    if boss then
-        -- Di chuyển đến vị trí boss (bay lên cao để không bị tấn công)
-        moveToPosition(boss.HumanoidRootPart.CFrame, 3)
-        
-        -- Tự động tấn công
-        -- Không cần khai báo phím
-    end
-    
-    -- Kiểm tra nếu đã đánh boss xong (giả lập)
-    if math.random(1, 100) == 1 then
-        printPhase("Đã đánh xong Dough King! - Nhận Drops...")
-        
-        -- Reset script
-        phase = "farm"
-        enemyCount = 0
-        hasDefeated500 = false
-        printPhase("Script đã reset - Bắt đầu lại từ Phase Farm")
-    end
-    
-    task.wait(0.3)
-end
-
--- ============================================================================
--- VÒNG LẶP CHÍNH
--- ============================================================================
-
-printPhase("Script đã khởi động!")
-printPhase("Phase hiện tại: " .. phase)
-
--- No-clip khi farm (bay không bị quái đánh)
-game:GetService("RunService").RenderStepped:Connect(function()
-    if autofarm then
-        local character = game.Players.LocalPlayer.Character
-        if character and character:FindFirstChild("Humanoid") then
-            character.Humanoid:ChangeState(11) -- No-clip mode
+-- ================= NO CLIP =================
+RunService.Stepped:Connect(function()
+    if not getgenv().Auto then return end
+    for _, v in pairs(char():GetChildren()) do
+        if v:IsA("BasePart") then
+            v.CanCollide = false
         end
     end
 end)
 
--- Vòng lặp chính
-while autofarm do
-    if phase == "farm" then
-        farmPhase()
-    elseif phase == "get_chalice" then
-        getChalicePhase()
-    elseif phase == "summon" then
-        summonPhase()
-    elseif phase == "fight" then
-        fightPhase()
-    end
-    
-    task.wait(0.1)
-end
+-- ================= GUI =================
+local gui = Instance.new("ScreenGui", game.CoreGui)
+gui.Name = "DK_DELTA"
 
-printPhase("Script đã dừng!")
+local f = Instance.new("Frame", gui)
+f.Size = UDim2.new(0,260,0,160)
+f.Position = UDim2.new(0.05,0,0.3,0)
+f.BackgroundColor3 = Color3.fromRGB(40,40,40)
+
+local title = Instance.new("TextLabel", f)
+title.Size = UDim2.new(1,0,0,40)
+title.Text = "AUTO DOUGH KING (DELTA)"
+title.TextColor3 = Color3.new(1,1,1)
+title.BackgroundColor3 = Color3.fromRGB(200,80,80)
+
+local status = Instance.new("TextLabel", f)
+status.Position = UDim2.new(0,0,0.35,0)
+status.Size = UDim2.new(1,0,0,30)
+status.Text = "Status: OFF"
+status.TextColor3 = Color3.new(1,1,1)
+status.BackgroundTransparency = 1
+
+local btn = Instance.new("TextButton", f)
+btn.Position = UDim2.new(0.15,0,0.65,0)
+btn.Size = UDim2.new(0.7,0,0,40)
+btn.Text = "START"
+btn.BackgroundColor3 = Color3.fromRGB(80,200,80)
+
+btn.MouseButton1Click:Connect(function()
+    getgenv().Auto = not getgenv().Auto
+    if getgenv().Auto then
+        btn.Text = "STOP"
+        btn.BackgroundColor3 = Color3.fromRGB(200,80,80)
+        status.Text = "Status: RUNNING"
+    else
+        btn.Text = "START"
+        btn.BackgroundColor3 = Color3.fromRGB(80,200,80)
+        status.Text = "Status: OFF"
+    end
+end)
+
+-- ================= MAIN LOOP =================
+task.spawn(function()
+    while task.wait(0.2) do
+        if not getgenv().Auto then continue end
+
+        -- ƯU TIÊN ELITE NẾU SPAWN
+        if not hasItem("Sweet Chalice") then
+            if eliteAlive() and not hasItem("God's Chalice") then
+                phase = "elite"
+            else
+                phase = "cake"
+            end
+        else
+            phase = "summon"
+        end
+
+        -- FARM CAKE
+        if phase == "cake" then
+            status.Text = "Farm Cake"
+            local e = findEnemy(CakeEnemies)
+            if e then
+                repeat
+                    tp(e.HumanoidRootPart.CFrame)
+                    attack()
+                until e.Humanoid.Health <= 0 or not getgenv().Auto
+            end
+        end
+
+        -- FARM ELITE
+        if phase == "elite" then
+            status.Text = "Elite → God's Chalice"
+            local e = findEnemy(EliteNames)
+            if e then
+                repeat
+                    tp(e.HumanoidRootPart.CFrame)
+                    attack()
+                until e.Humanoid.Health <= 0 or not getgenv().Auto
+            end
+        end
+
+        -- DOUGH KING
+        if phase == "summon" then
+            status.Text = "Dough King"
+            local boss = findEnemy({"Dough King"})
+            if boss then
+                repeat
+                    tp(boss.HumanoidRootPart.CFrame)
+                    attack()
+                until boss.Humanoid.Health <= 0 or not getgenv().Auto
+            end
+        end
+    end
+end)
+
+print("✅ AUTO DOUGH KING DELTA READY")
