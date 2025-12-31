@@ -3,7 +3,6 @@
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local VIM = game:GetService("VirtualInputManager")
 local player = Players.LocalPlayer
 
 -- ================== STATE ==================
@@ -31,9 +30,31 @@ local function hrp()
     return char():WaitForChild("HumanoidRootPart")
 end
 
-local function click()
-    VIM:SendMouseButtonEvent(0,0,0,true,game,0)
-    VIM:SendMouseButtonEvent(0,0,0,false,game,0)
+local function equipWeapon()
+    local char = player.Character
+    if not char then return end
+
+    -- nếu đã cầm thì thôi
+    for _, v in pairs(char:GetChildren()) do
+        if v:IsA("Tool") then
+            return v
+        end
+    end
+
+    -- lấy trong backpack
+    for _, v in pairs(player.Backpack:GetChildren()) do
+        if v:IsA("Tool") then
+            char.Humanoid:EquipTool(v)
+            return v
+        end
+    end
+end
+
+local function attack()
+    local tool = equipWeapon()
+    if tool then
+        tool:Activate()
+    end
 end
 
 local function tp(cf)
@@ -137,7 +158,7 @@ end
             if e then
                 repeat
                     tp(e.HumanoidRootPart.CFrame)
-                    click()
+                    attack()
                 until e.Humanoid.Health <= 0 or not getgenv().Auto
             end
         end
@@ -149,7 +170,7 @@ end
             if e then
                 repeat
                     tp(e.HumanoidRootPart.CFrame)
-                    click()
+                    attack()
                 until e.Humanoid.Health <= 0 or not getgenv().Auto
             end
         end
@@ -161,7 +182,7 @@ end
             if boss then
                 repeat
                     tp(boss.HumanoidRootPart.CFrame)
-                    click()
+                    attack()
                 until boss.Humanoid.Health <= 0 or not getgenv().Auto
             end
         end
